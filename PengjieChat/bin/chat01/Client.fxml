@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="398.0" prefWidth="547.0" style="-fx-background-color: #d2b4de;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="chat01.ClientController">
+   <children>
+      <TextArea fx:id="messageDisplay" layoutX="14.0" layoutY="74.0" prefHeight="234.0" prefWidth="381.0" />
+      <TextField fx:id="messageText" layoutX="14.0" layoutY="318.0" prefHeight="39.0" prefWidth="381.0" promptText="Input Message To Send" />
+      <Button fx:id="sendMessageButton" layoutX="401.0" layoutY="318.0" mnemonicParsing="false" onAction="#setSendMessageButtonAction" prefHeight="39.0" prefWidth="90.0" style="-fx-background-color: #808b96;" text="Send" />
+      <MenuButton fx:id="privateChatMenu" layoutX="395.0" layoutY="74.0" mnemonicParsing="false" prefHeight="39.0" prefWidth="147.0" text="Private Chat">
+        <items>
+          <MenuItem mnemonicParsing="false" text="Action 1" />
+          <MenuItem mnemonicParsing="false" text="Action 2" />
+        </items>
+      </MenuButton>
+      <Label fx:id="welcomInfo" layoutX="14.0" layoutY="22.0" prefHeight="39.0" prefWidth="381.0" textFill="#c32a2a">
+         <font>
+            <Font name="System Bold Italic" size="18.0" />
+         </font>
+      </Label>
+   </children>
+</Pane>
