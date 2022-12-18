@@ -1,14 +1,7 @@
 
 package chat01;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -16,10 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 
 public class Server implements Runnable {
@@ -30,8 +20,6 @@ public class Server implements Runnable {
 	private static ArrayList<ClientProcessor> clientList = new ArrayList<ClientProcessor>();// socket集合
 //	ObservableList<Client> ipAddressList;
 	private boolean isStart = false;
-
-	private Map<String, ClientProcessor> clients = new HashMap<>();
 
 	public Server(int port, Observable uiComponent) {
 		super();
@@ -65,6 +53,8 @@ public class Server implements Runnable {
 	// 内部类 内部类是解决起线程的问题 observable是解决数据更新后刷新界面问题
 	private static class ClientProcessor implements Runnable {
 
+		private static Map<String, ClientProcessor> clientsMap = new HashMap<>();
+
 		private Socket socket;
 		private Observable uiComponent;
 		private JDBC jdbc = new JDBC();
@@ -72,6 +62,7 @@ public class Server implements Runnable {
 		private String receiverName;
 		private String messageContent;
 		String resultStr = null;
+		String clientName ;
 
 		private ClientProcessor(Socket socket, Observable uiComponent) {
 			this.socket = socket;
@@ -82,7 +73,7 @@ public class Server implements Runnable {
 		@Override
 		public void run() {
 
-			connentDBcheckUsernameAndPassword(receiveUsernameAndPasswordFromLoginPage());		
+			connentDBcheckUsernameAndPasswordEx(receiveUsernameAndPasswordFromLoginPage());
 			uiComponent.append("one client connected, ip address is: " + socket.getInetAddress() + "=》 Port is: "
 					+ socket.getPort());
 			receiveMessageFromClient();
@@ -115,6 +106,36 @@ public class Server implements Runnable {
 			// e.printStackTrace();
 			// }
 			// return client;
+
+		}
+
+		public void connentDBcheckUsernameAndPasswordEx(String[] userInfo) {// Client client
+			DataOutputStream dos = null;
+			try {
+				dos = new DataOutputStream(this.socket.getOutputStream());
+				resultStr = "success";
+				dos.writeUTF(resultStr);
+
+				//add clients intoMap;
+				clientName = userInfo[0];
+				clientsMap.put(userInfo[0],this);
+
+				broadCastClients(clientsMap.keySet());
+
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+
+		}
+
+
+		private void broadCastClients(Set<String> clients) {
+			StringBuffer clientsStr = new StringBuffer("C:");
+			clients.forEach(c -> clientsStr.append(c + ","));
+			String commaSeparatedClients = clientsStr.toString();
+
+			clientsMap.values().forEach(c->c.sendMessageToClients(commaSeparatedClients));
+
 
 		}
 
@@ -188,12 +209,26 @@ public class Server implements Runnable {
 					BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 					String strReceived = bufferedReader.readLine();
 					uiComponent.append(strReceived);
-					strReceived = strReceived.substring(2);
+
+					char msgType = strReceived.charAt(0);
+					if (msgType == 'M') {
+						int pos = strReceived.indexOf("_");
+						String receiver = strReceived.substring(2, pos);
+						String messageBody = strReceived.substring(pos + 1);
+						String msg = "M:" + messageBody;
+						if ("ALL".equals(receiver)) {
+							broadcastMessage(msg);
+						} else {
+							clientsMap.get(receiver).sendMessageToClients(msg);
+						}
+
+						senderName = messageBody.split(" said: ")[0];
+						receiverName = receiver;
+						messageContent = messageBody.split(" said: ")[1];
+						//connectDBToSaveData();
+					}
 					
-					senderName = strReceived.split(" said: ")[0];
-					receiverName = "not finish";
-					messageContent = strReceived.split(" said: ")[1];					
-					connectDBToSaveData();
+
 					
 					// 服务器读到的信息 也需要写进循环
 //					String strReceived = dis.readUTF();				
@@ -206,31 +241,44 @@ public class Server implements Runnable {
 //					for (ClientProcessor c : clientList) {
 //						c.sendMessageToClients(serverSentToClientStr);
 //					}
-					Iterator<ClientProcessor> iterator = clientList.iterator();
-					while(iterator.hasNext()) {
-						ClientProcessor c = iterator.next();
-						c.sendMessageToClients(strReceived);
-
-					} 
+//					Iterator<ClientProcessor> iterator = clientList.iterator();
+//					while(iterator.hasNext()) {
+//						ClientProcessor c = iterator.next();
+//						c.sendMessageToClients("M:"+strReceived);
+//					}
 				}
 			} catch (SocketException e) {
 				System.out.println("One client is offline");
-				uiComponent.append(socket.getPort() + " is offline!");
+				uiComponent.append(clientName + " from :" + socket.getPort() + " is offline!");
+				clientsMap.remove(clientName);
+
+				broadCastClients(clientsMap.keySet());
+
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+
+
+		private void broadcastMessage(String strSend){
+			clientsMap.values().forEach(c -> c.sendMessageToClients(strSend));
 		}
 
 		// 服务器端发送数据的方法 且是同时发送给客户 需要遍历ClientList
 		public void sendMessageToClients(String strSend) {
 
 			try {
-				//System.out.println("sara1: " + strSend);
-				DataOutputStream dos = new DataOutputStream(this.socket.getOutputStream());						
+				System.out.println("sending to all clients: " + strSend);
+				//DataOutputStream dos = new DataOutputStream(this.socket.getOutputStream());
 				String utf8EncodedString = new String(strSend.getBytes(StandardCharsets.UTF_8),StandardCharsets.UTF_8);											
 				// 发送给服务器端的message,相当于写过去，方法是dos.writeUTF，且服务器端必须有接收这个内容的方法
-				dos.writeUTF(strSend+"\r\n");
-				//	dos.writeChars(strSend);	
+
+				OutputStream os = socket.getOutputStream();
+				OutputStreamWriter osw = new OutputStreamWriter(os);
+				PrintWriter pw = new PrintWriter(osw);
+				pw.println(strSend);
+				pw.flush();
+				//	dos.writeChars(strSend);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
