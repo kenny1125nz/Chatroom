@@ -10,6 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.lang.annotation.Target;
 import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -28,6 +29,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class LoginController {//extends Applicationimplements Initializable
@@ -63,10 +65,11 @@ public class LoginController {//extends Applicationimplements Initializable
 	@FXML
 	private Label invalidFeedback;
 	
+
 	
 	
 	public void loginProcess(ActionEvent event) {
-//		Connection connection = new Connection();
+
 //		
 //		int port = 2323;//Integer.parseInt(portnumberInput.getText());
 //		isConnect = connection.connectToServer("Sarah", "49", "localhost", port);
@@ -104,7 +107,6 @@ public class LoginController {//extends Applicationimplements Initializable
 //					&& ((ip.equals("localhost")) || (ip.equals("127.0.0.1")))) {
 
 //		clientSocket = client.getClientSocket();
-//		clientSocket = this.businessLogic.getCurrentClient().getClientSocket();
 		
 		try {
 			clientSocket = new Socket(ip, port);
@@ -167,7 +169,7 @@ public class LoginController {//extends Applicationimplements Initializable
 			if (resultStr.equals("success")) {
 				flag = true;
 			} else {
-				invalidFeedback.setText(resultStr);
+				invalidFeedback.setText("Your username or password is invalid!");
 				flag = false;
 			}
 
@@ -201,9 +203,13 @@ public class LoginController {//extends Applicationimplements Initializable
 			Scene scene = new Scene(root);
 			stage.setScene(scene);
 			stage.show();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.err.println(String.format("Error: %s", e.getMessage()));
 		}
+		
+		
+		
+	
 
 //		root = FXMLLoader.load(getClass().getResource("Client.fxml"));
 //		stage = (Stage) ((Node) event.getSource()).getScene().getWindow();		
@@ -228,6 +234,8 @@ public class LoginController {//extends Applicationimplements Initializable
 
 	private void forgotPassword() {
 
+		
+		
 	}
 
 

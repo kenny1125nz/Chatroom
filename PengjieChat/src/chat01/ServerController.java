@@ -43,7 +43,8 @@ public class ServerController implements Observable{
 
 
 	public void startServer() throws IOException {
-
+		
+		serverDisplayText.setEditable(false);
 		port = Integer.parseInt(portInput.getText());
 		//port range1024～ 65535
 		if(port>1024 && port<65535) {
